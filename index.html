@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>超大爱心祝福弹窗</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            love: {
+              100: '#FFEFF6',
+              200: '#FFD6E8',
+              300: '#FFBEDA',
+              400: '#FFA4CC',
+              500: '#FF8BC3',
+              600: '#FF72B5',
+              700: '#FF59A7',
+              800: '#FF4099',
+              900: '#FF278B'
+            }
+          },
+          fontFamily: {
+            cute: ['"Comic Sans MS"', '"Bubblegum Sans"', 'cursive']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .popup-shadow {
+        box-shadow: 0 5px 15px rgba(255, 72, 153, 0.2);
+      }
+      .animate-float {
+        animation: float 3s ease-in-out infinite;
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+    }
+  </style>
+  
+  <style>
+    body {
+      background-color: #FFF9FC;
+      background-image: 
+        radial-gradient(#FFB6C1 0.5px, transparent 0.5px),
+        radial-gradient(#FFB6C1 0.5px, #FFF9FC 0.5px);
+      background-size: 20px 20px;
+      background-position: 0 0, 10px 10px;
+      overflow-x: hidden;
+    }
+    
+    .blessing-popup {
+      position: fixed;
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      opacity: 0;
+      transform: scale(0.5) translate(-50%, -50%);
+      z-index: 50;
+    }
+    
+    .blessing-popup.active {
+      opacity: 1;
+      transform: scale(1) translate(-50%, -50%);
+    }
+    
+    .heart-bg {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px;
+      height: 700px;
+      opacity: 0.03;
+      z-index: 10;
+      pointer-events: none;
+    }
+    
+    @media (max-width: 768px) {
+      .heart-bg {
+        width: 600px;
+        height: 500px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .heart-bg {
+        width: 400px;
+        height: 350px;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen font-cute">
+  <!-- 背景爱心轮廓（放大版） -->
+  <div class="heart-bg">
+    <svg width="100%" height="100%" viewBox="0 0 200 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M100 150C130 180 200 140 200 95C200 50 150 30 100 30C50 30 0 50 0 95C0 140 70 180 100 150Z" fill="#FF69B4"/>
+    </svg>
+  </div>
+
+  <!-- 控制按钮 -->
+  <div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-40 flex gap-3 flex-wrap justify-center">
+    <button id="generateBtn" class="bg-love-600 hover:bg-love-700 text-white px-6 py-3 rounded-full shadow-lg transition-all active:scale-95 flex items-center">
+      <i class="fa fa-heart mr-2"></i> 生成超大爱心
+    </button>
+    <button id="clearBtn" class="bg-white hover:bg-gray-100 text-love-800 px-4 py-3 rounded-full shadow-lg transition-all active:scale-95">
+      <i class="fa fa-times"></i>
+    </button>
+  </div>
+
+  <!-- 弹窗容器 -->
+  <div id="popupContainer"></div>
+
+  <script>
+    // 祝福语集合（新增了更多祝福）
+    const blessings = [
+      "愿你被世界温柔以待", "每天都有甜甜的好心情", "幸福像花儿一样绽放",
+      "所有美好都如期而至", "爱你不止今天，而是每一天", "愿快乐与你常伴",
+      "平安喜乐，万事顺遂", "笑容永远灿烂如花", "每一天都充满阳光与爱",
+      "好运连连，福气满满", "温暖如初，深情不减", "所念皆如愿，所求皆所得",
+      "被爱包围，被幸福填满", "日子甜甜，好运连连", "心有暖阳，何惧风霜",
+      "爱与被爱，同时发生", "平安喜乐，岁岁无忧", "愿你永远保持这份纯真",
+      "每一天都值得用心去爱", "幸福藏在每一个日常里", "愿美好与你不期而遇",
+      "生活明朗，万物可爱", "你笑起来的样子真好看", "珍惜每一个温暖的瞬间",
+      "愿我们都越来越好", "心之所向，素履以往", "以梦为马，不负韶华",
+      "愿你三冬暖，春不寒", "愿你天黑有灯，下雨有伞"
+    ];
+
+    // 颜色集合
+    const colors = [
+      'bg-love-100 border-love-200',
+      'bg-love-200 border-love-300',
+      'bg-love-300 border-love-400',
+      'bg-love-400 border-love-500',
+      'bg-love-500 border-love-600 text-white',
+      'bg-love-600 border-love-700 text-white',
+      'bg-love-700 border-love-800 text-white',
+      'bg-love-800 border-love-900 text-white'
+    ];
+
+    // 生成爱心形状的坐标点（核心公式）
+    function generateHeartPoints(count = 60, scale = 1, offsetX = 0, offsetY = 0) {
+      const points = [];
+      const step = (2 * Math.PI) / count;
+      
+      for (let i = 0; i < count; i++) {
+        const t = i * step;
+        // 心形曲线参数方程
+        let x = 16 * Math.pow(Math.sin(t), 3);
+        let y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+        // 缩放和偏移（scale越大爱心越大）
+        x = x * scale + offsetX;
+        y = -y * scale + offsetY;
+        points.push({ x, y });
+      }
+      return points;
+    }
+
+    // 创建单个祝福弹窗（稍大尺寸）
+    function createBlessingPopup(x, y, index) {
+      const popup = document.createElement('div');
+      const colorClass = colors[Math.floor(Math.random() * colors.length)];
+      const blessing = blessings[Math.floor(Math.random() * blessings.length)];
+      // 弹窗尺寸增大（9-13rem）
+      const size = Math.floor(Math.random() * 4) + 9;
+      
+      popup.className = `blessing-popup ${colorClass} rounded-xl border p-4 max-w-[140px] popup-shadow`;
+      popup.style.width = `${size * 10}px`;
+      popup.style.left = `${x}px`;
+      popup.style.top = `${y}px`;
+      popup.innerHTML = `
+        <div class="text-center">
+          <p class="text-sm mb-2">${blessing}</p>
+          <div class="text-xs opacity-70">
+            <i class="fa fa-heart"></i>
+          </div>
+        </div>
+        <button class="close-btn absolute top-1 right-1 text-xs opacity-50 hover:opacity-100">
+          <i class="fa fa-times"></i>
+        </button>
+      `;
+      
+      // 关闭按钮事件
+      popup.querySelector('.close-btn').addEventListener('click', () => {
+        popup.style.opacity = '0';
+        popup.style.transform = 'scale(0.5) translate(-50%, -50%)';
+        setTimeout(() => popup.remove(), 300);
+      });
+      
+      document.getElementById('popupContainer').appendChild(popup);
+      // 错开动画时间，形成流动效果
+      setTimeout(() => popup.classList.add('active'), index * 50);
+      return popup;
+    }
+
+    // 生成爱心祝福弹窗（核心调整：放大爱心）
+    function generateHeartBlessings() {
+      clearAllPopups();
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      
+      let scale, count, offsetX, offsetY;
+      
+      if (screenWidth < 480) {
+        // 小屏手机：大幅提高缩放比例和弹窗数量
+        scale = 5;        // 原3.5 → 增大43%
+        count = 45;       // 原30 → 增加50%
+        offsetX = screenWidth / 2;
+        offsetY = screenHeight / 2 - 50;  // 上移更多，避免超出屏幕
+      } else if (screenWidth < 768) {
+        // 大屏手机/平板
+        scale = 6.5;      // 原4.5 → 增大44%
+        count = 55;       // 原40 → 增加37.5%
+        offsetX = screenWidth / 2;
+        offsetY = screenHeight / 2 - 60;
+      } else {
+        // 桌面设备
+        scale = 8;        // 原6 → 增大33%
+        count = 70;       // 原50 → 增加40%
+        offsetX = screenWidth / 2;
+        offsetY = screenHeight / 2 - 80;
+      }
+      
+      // 生成爱心坐标点
+      const points = generateHeartPoints(count, scale, offsetX, offsetY);
+      
+      // 创建弹窗（增大随机偏移，让爱心更舒展）
+      points.forEach((point, index) => {
+        // 偏移范围从±30增大到±40，让爱心环更宽松
+        const randomOffsetX = (Math.random() - 0.5) * 40;
+        const randomOffsetY = (Math.random() - 0.5) * 40;
+        createBlessingPopup(
+          point.x + randomOffsetX, 
+          point.y + randomOffsetY, 
+          index
+        );
+      });
+    }
+
+    // 清空所有弹窗
+    function clearAllPopups() {
+      const container = document.getElementById('popupContainer');
+      const popups = container.querySelectorAll('.blessing-popup');
+      
+      popups.forEach((popup, index) => {
+        setTimeout(() => {
+          popup.style.opacity = '0';
+          popup.style.transform = 'scale(0.5) translate(-50%, -50%)';
+          setTimeout(() => popup.remove(), 300);
+        }, index * 20);
+      });
+    }
+
+    // 事件监听
+    document.getElementById('generateBtn').addEventListener('click', generateHeartBlessings);
+    document.getElementById('clearBtn').addEventListener('click', clearAllPopups);
+    window.addEventListener('load', () => setTimeout(generateHeartBlessings, 500));
+    window.addEventListener('resize', () => {
+      clearTimeout(window.resizeTimer);
+      window.resizeTimer = setTimeout(generateHeartBlessings, 500);
+    });
+  </script>
+</body>
+</html>
